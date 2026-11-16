@@ -12,7 +12,7 @@ Adds the component that any texturable item uses to set its material to the iron
 
 Put a blank mould and a bare stock Metal Bow into the standard mould press. Pulling the lever consumes the donor bow and leaves a Metal Bow Mould. The standard crafted mould has three uses. Each cast takes 8 ingots of one unlocked metal and produces one whole bow in that metal.
 
-To recycle a bow, remove its attachments and put one bare stock Metal Bow into the smelter's ore intake with the other ore inputs empty. Add fuel to recover four matching stock ingots. The bow's metal must be unlocked at the smelter. Bows with the shared Copper and Bronze material yield Copper ingots.
+To recycle a bow, remove its attachments and place or drop one bare stock Metal Bow into the smelter's three-slot ore tray with the other ore inputs empty. Add fuel and work the bellows to recover four matching stock ingots. One normal fuel unit is enough. The bow's metal must be unlocked at the smelter. Bows with the shared Copper and Bronze material yield Copper ingots.
 
 Cave loot uses the existing metal distribution. Plain spawns start in Iron, and the game saves the bow's material.
 
