@@ -16,7 +16,9 @@ To recycle a bow, remove its attachments and place or drop one bare stock Metal 
 
 Cave loot uses the existing metal distribution. Plain spawns start in Iron, and the game saves the bow's material.
 
-Arrow impact damage and draw response both use the bow metal's damage stat relative to Iron. Iron matches the stock bow. Copper has 0.7× the damage and draw response of Iron, while Mythril has 2.5×. These comparisons use the same arrow and draw strength.
+Draw response uses the bow metal's damage stat relative to Iron. Iron draws like the stock bow, Copper draws at 0.7×, and Mythril draws at 2.5×. Arrow impact damage uses the same metal ratio multiplied by 0.55, so the Iron bow hits for 55% of the stock bow's damage with the same arrow and draw strength.
+
+Each successful shot wears the bow's native durability meter, including misses. A full, bare bow gets about 145 shots from firing wear alone. The game saves wear and handles the worn, damaged, and broken states.
 
 Use the usual server spawn command to select a metal. Replace `YourName` with the player name.
 
