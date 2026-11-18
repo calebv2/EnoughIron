@@ -18,7 +18,27 @@ Cave loot uses the existing metal distribution. Plain spawns start in Iron, and 
 
 Draw response uses the bow metal's damage stat relative to Iron. Iron draws like the stock bow, Copper draws at 0.7×, and Mythril draws at 2.5×. Arrow impact damage uses the same metal ratio multiplied by 0.55, so the Iron bow hits for 55% of the stock bow's damage with the same arrow and draw strength.
 
-Each successful shot wears the bow's native durability meter, including misses. A full, bare bow gets about 145 shots from firing wear alone. The game saves wear and handles the worn, damaged, and broken states.
+Each successful shot wears the bow, including misses. The game saves the wear percentage and applies it to the material's shot limit on reload. These limits assume a full bow and firing wear alone.
+
+| Metal | Shots |
+|---|---:|
+| Copper, Bronze, Gold | 250 |
+| Legacy Crystal | 350 |
+| Iron | 500 |
+| Red Iron Alloy | 600 |
+| Orchi Alloy, White Gold Alloy | 750 |
+| Silver | 900 |
+| Mythril | 1,200 |
+| Evinon Steel Alloy | 1,450 |
+| Crysteel | 1,650 |
+| Ember Steel | 1,700 |
+| Carsi Alloy | 1,800 |
+| Pink Diamond | 1,900 |
+| Light & Dark Steel | 2,100 |
+| Jade Steel | 2,250 |
+| Death Steel | 2,500 |
+
+Unlisted materials use Iron's 500-shot limit.
 
 Use the usual server spawn command to select a metal. Replace `YourName` with the player name.
 
