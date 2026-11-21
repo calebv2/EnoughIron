@@ -10,6 +10,9 @@ namespace EnoughIron
     public sealed partial class MetalBowBehaviour : MonoBehaviour, IListenToPhysicalMaterial
     {
         internal const uint IronHash = 1;
+        private const uint DeathSteelHash = 0x44454D01;
+        private const float DeathSteelDamageRatio = 3.9f;
+        private const float DeathSteelDrawSpeed = 8f;
         private const float ArrowDamageScale = .55f;
         private const int IronShotLimit = 500;
         private static readonly FieldInfo tightness = AccessTools.Field(typeof(BowString), "tightnessMultiplier");
@@ -57,10 +60,22 @@ namespace EnoughIron
 
             // Native HeldUpdate divides its pull response by this cached value.
             // Every material change derives a fresh value from the Iron baseline.
-            tightness.SetValue(bowString, 1f / ratio);
+            float drawSpeed = GetDrawSpeed(material.Hash, ratio);
+            tightness.SetValue(bowString, 1f / drawSpeed);
             damageFactor = ratio * ArrowDamageScale;
             shotLimit = GetShotLimit(material.Hash);
             ApplyAppearance(material);
+        }
+
+        private static float GetDrawSpeed(uint materialHash, float damageRatio)
+        {
+            if (materialHash == DeathSteelHash)
+                return DeathSteelDrawSpeed;
+            if (damageRatio <= 1f)
+                return damageRatio;
+
+            float progress = (damageRatio - 1f) / (DeathSteelDamageRatio - 1f);
+            return Mathf.Lerp(1f, DeathSteelDrawSpeed, progress);
         }
 
         internal static int GetShotLimit(uint materialHash)
@@ -83,7 +98,7 @@ namespace EnoughIron
                 case 0x50444D01: return 1900; // Pink Diamond
                 case 0x4C444D01: return 2100; // Light & Dark Steel
                 case 0x4A444D01: return 2250; // Jade Steel
-                case 0x44454D01: return 2500; // Death Steel
+                case DeathSteelHash: return 2500;
                 default:         return IronShotLimit;
             }
         }

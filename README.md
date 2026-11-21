@@ -16,7 +16,7 @@ To recycle a bow, remove its attachments and place or drop one bare stock Metal 
 
 Cave loot uses the existing metal distribution. Plain spawns start in Iron, and the game saves the bow's material.
 
-Draw response uses the bow metal's damage stat relative to Iron. Iron draws like the stock bow, Copper draws at 0.7×, and Mythril draws at 2.5×. Arrow impact damage uses the same metal ratio multiplied by 0.55, so the Iron bow hits for 55% of the stock bow's damage with the same arrow and draw strength.
+Iron draws at stock speed and Death Steel draws at 8×. Metals above Iron scale linearly by their damage stat up to 8×, putting Mythril at about 4.62×. Copper and Bronze draw at 0.70×, Gold at 0.50×, and Legacy Crystal at 0.85×. Arrow impact damage uses the metal's damage stat relative to Iron multiplied by 0.55, so the Iron bow hits for 55% of the stock bow's damage with the same arrow and draw strength.
 
 Each successful shot wears the bow, including misses. The game saves the wear percentage and applies it to the material's shot limit on reload. These limits assume a full bow and firing wear alone.
 
