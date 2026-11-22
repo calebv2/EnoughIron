@@ -3,6 +3,7 @@ using System.Reflection;
 using Alta;
 using Alta.Caves;
 using Alta.Impact;
+using Alta.Inventory;
 using Alta.Networking;
 using HarmonyLib;
 using MelonLoader;
@@ -14,6 +15,9 @@ namespace EnoughIron
     {
         internal const uint PrefabHash = 25100;
         private const uint ItemHash = 64508;
+        private const string BeltSide = "Belt Side";
+        private static readonly Item.DockPositioning sideSlotPose =
+            new Item.DockPositioning(Vector3.zero, new Vector3(0f, -180f, 0f));
 
         private static readonly FieldInfo entityBehaviours = Require<MonoBehaviour[]>(typeof(NetworkEntity), "networkEntityBehaviours");
         private static readonly FieldInfo partEntity = Require<NetworkEntity>(typeof(NetworkEntityBehaviour), "entity");
@@ -46,8 +50,41 @@ namespace EnoughIron
             if (generate == null)
                 throw new MissingMethodException(typeof(PhysicalMaterialPart).FullName, "Generate");
 
+            var checkDock = AccessTools.DeclaredMethod(typeof(PickupDock), nameof(PickupDock.CheckAllowed), new[]
+            {
+                typeof(Interactor), typeof(Pickup), typeof(int), typeof(PickupDock).MakeByRefType()
+            });
+            if (checkDock == null)
+                throw new MissingMethodException(typeof(PickupDock).FullName, nameof(PickupDock.CheckAllowed));
+
+            var getPose = AccessTools.DeclaredMethod(typeof(Item), nameof(Item.GetPositioning),
+                new[] { typeof(PickupDockSettings), typeof(bool), typeof(bool) });
+            if (getPose == null)
+                throw new MissingMethodException(typeof(Item).FullName, nameof(Item.GetPositioning));
+
             harmony.Patch(initialize, prefix: new HarmonyMethod(typeof(MetalBowInstances), nameof(BeforeInitialize)));
             harmony.Patch(generate, prefix: new HarmonyMethod(typeof(MetalBowInstances), nameof(BeforeMaterialGeneration)));
+            harmony.Patch(checkDock, postfix: new HarmonyMethod(typeof(MetalBowInstances), nameof(AllowBowInSideSlot)));
+            harmony.Patch(getPose, postfix: new HarmonyMethod(typeof(MetalBowInstances), nameof(UseSideSlotPose)));
+        }
+
+        private static void AllowBowInSideSlot(PickupDock __instance, Pickup __1, ref PickupDock.AllowedResult __result)
+        {
+            // The native size check runs after the tag, occupancy, and pickup filters.
+            if (__result == PickupDock.AllowedResult.CraftingSizeInvalid && IsBeltSide(__instance.Settings)
+                && __1 != null && __1.Entity != null && IsStockBow(__1.Entity))
+                __result = PickupDock.AllowedResult.Ok;
+        }
+
+        private static void UseSideSlotPose(Item __instance, PickupDockSettings __0, bool __1, ref Item.DockPositioning __result)
+        {
+            if (__instance.Hash == ItemHash && !__1 && IsBeltSide(__0))
+                __result = sideSlotPose;
+        }
+
+        private static bool IsBeltSide(PickupDockSettings settings)
+        {
+            return settings != null && settings.name == BeltSide;
         }
 
         private static bool BeforeMaterialGeneration(PhysicalMaterialPart __instance, SpawnData __0)
@@ -73,7 +110,7 @@ namespace EnoughIron
                 if (!reportedInstallation)
                 {
                     reportedInstallation = true;
-                    MelonLogger.Msg("ENOUGH_IRON_BOWS_READY prefab=25100 iron=1 damageAndDraw=materialRatio");
+                    MelonLogger.Msg("ENOUGH_IRON_BOWS_READY prefab=25100 iron=1 sideSlots=enabled");
                 }
             }
             catch (Exception exception)
