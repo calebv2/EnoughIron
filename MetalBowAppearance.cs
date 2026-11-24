@@ -1,4 +1,8 @@
 using System;
+using System.Collections.Generic;
+using System.Reflection;
+using HarmonyLib;
+using MelonLoader;
 using UnityEngine;
 
 namespace EnoughIron
@@ -8,6 +12,9 @@ namespace EnoughIron
         [SerializeField] private Renderer[] bodyRenderers;
         [SerializeField] private int[] bodySlots;
         [SerializeField] private Material[] originalBodyMaterials;
+        private Material glowSource;
+        private Material glowMaterial;
+        private object glowDefinition;
 
         private void ConfigureAppearance(GameObject root)
         {
@@ -54,7 +61,7 @@ namespace EnoughIron
                 return;
             }
 
-            Material replacement = GetBodyMaterial(material);
+            Material replacement = ApplyIngotGlow(material, GetBodyMaterial(material));
             for (int index = 0; index < bodyRenderers.Length; index++)
             {
                 Renderer renderer = bodyRenderers[index];
@@ -70,6 +77,89 @@ namespace EnoughIron
                 materials[slot] = visual;
                 renderer.sharedMaterials = materials;
             }
+        }
+
+        private static class IngotGlow
+        {
+            internal static readonly MethodInfo Find = AccessTools.TypeByName("CustomIngots.API.IngotCatalog")
+                ?.GetMethod("FindByMaterialHash", new[] { typeof(uint) });
+            internal static readonly PropertyInfo Emission = Find?.ReturnType.GetProperty("Emission");
+            internal static readonly MethodInfo Bind = Find == null ? null : AccessTools
+                .TypeByName("CustomIngots.Config.Integration.CrystalClientAppearancePatch")
+                ?.GetMethod("BindEmissionPulse", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic, null,
+                    new[] { typeof(GameObject), typeof(IReadOnlyList<Material>), Find.ReturnType }, null);
+            internal static bool ReportedFailure;
+        }
+
+        private Material ApplyIngotGlow(PhysicalMaterial metal, Material surface)
+        {
+            if (surface == null || (!surface.HasProperty("_Emission") && !surface.HasProperty("_EmissionColor"))
+                || IngotGlow.Emission == null)
+            {
+                ReleaseAppearance();
+                return surface;
+            }
+
+            try
+            {
+                object definition = IngotGlow.Find.Invoke(null, new object[] { metal.Hash });
+                if (ReferenceEquals(definition, glowDefinition) && surface == glowSource && glowMaterial != null)
+                    return glowMaterial;
+
+                ReleaseAppearance();
+                if (definition == null || !(IngotGlow.Emission.GetValue(definition) is Color emission)
+                    || Mathf.Max(emission.r, emission.g, emission.b) <= 0f)
+                    return surface;
+
+                glowSource = surface;
+                glowDefinition = definition;
+                glowMaterial = new Material(surface) { name = surface.name + " (Metal Bow Glow)" };
+                glowMaterial.EnableKeyword("_EMISSION");
+                if (glowMaterial.HasProperty("_Emission"))
+                    glowMaterial.SetColor("_Emission", emission);
+                if (glowMaterial.HasProperty("_EmissionColor"))
+                    glowMaterial.SetColor("_EmissionColor", emission);
+                if (glowMaterial.HasProperty("_ForcedTemperature"))
+                    glowMaterial.SetFloat("_ForcedTemperature", 1f);
+                IngotGlow.Bind?.Invoke(null, new object[] { gameObject, new[] { glowMaterial }, definition });
+                return glowMaterial;
+            }
+            catch (Exception exception)
+            {
+                ReportGlowFailure(exception);
+                ReleaseAppearance();
+                return surface;
+            }
+        }
+
+        private void ReleaseAppearance()
+        {
+            if (glowMaterial == null)
+                return;
+
+            try
+            {
+                IngotGlow.Bind?.Invoke(null, new object[] { gameObject, Array.Empty<Material>(), glowDefinition });
+            }
+            catch (Exception exception)
+            {
+                ReportGlowFailure(exception);
+            }
+            finally
+            {
+                Destroy(glowMaterial);
+                glowMaterial = null;
+                glowSource = null;
+                glowDefinition = null;
+            }
+        }
+
+        private static void ReportGlowFailure(Exception exception)
+        {
+            if (IngotGlow.ReportedFailure)
+                return;
+            IngotGlow.ReportedFailure = true;
+            MelonLogger.Warning("ENOUGH_IRON_BOW_GLOW_UNAVAILABLE " + exception.GetBaseException().Message);
         }
 
         private static Material GetBodyMaterial(PhysicalMaterial material)

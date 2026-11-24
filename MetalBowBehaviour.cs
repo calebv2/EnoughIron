@@ -140,6 +140,7 @@ namespace EnoughIron
 
         private void OnDestroy()
         {
+            ReleaseAppearance();
             if (shooter != null)
                 shooter.OnShoot -= WearAfterShot;
         }
