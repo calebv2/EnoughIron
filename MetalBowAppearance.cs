@@ -15,6 +15,7 @@ namespace EnoughIron
         private Material glowSource;
         private Material glowMaterial;
         private object glowDefinition;
+        private GameObject glowPulseHost;
 
         private void ConfigureAppearance(GameObject root)
         {
@@ -121,7 +122,14 @@ namespace EnoughIron
                     glowMaterial.SetColor("_EmissionColor", emission);
                 if (glowMaterial.HasProperty("_ForcedTemperature"))
                     glowMaterial.SetFloat("_ForcedTemperature", 1f);
-                IngotGlow.Bind?.Invoke(null, new object[] { gameObject, new[] { glowMaterial }, definition });
+                if (IngotGlow.Bind != null)
+                {
+                    // The ingot postfix clears pulse controllers on the pickup root when
+                    // its PhysicalMaterialPart has no native renderers. The bow owns its slots.
+                    glowPulseHost = new GameObject("Metal Bow Emission");
+                    glowPulseHost.transform.SetParent(transform, false);
+                    IngotGlow.Bind.Invoke(null, new object[] { glowPulseHost, new[] { glowMaterial }, definition });
+                }
                 return glowMaterial;
             }
             catch (Exception exception)
@@ -134,24 +142,14 @@ namespace EnoughIron
 
         private void ReleaseAppearance()
         {
-            if (glowMaterial == null)
-                return;
-
-            try
-            {
-                IngotGlow.Bind?.Invoke(null, new object[] { gameObject, Array.Empty<Material>(), glowDefinition });
-            }
-            catch (Exception exception)
-            {
-                ReportGlowFailure(exception);
-            }
-            finally
-            {
+            if (glowPulseHost != null)
+                Destroy(glowPulseHost);
+            if (glowMaterial != null)
                 Destroy(glowMaterial);
-                glowMaterial = null;
-                glowSource = null;
-                glowDefinition = null;
-            }
+            glowPulseHost = null;
+            glowMaterial = null;
+            glowSource = null;
+            glowDefinition = null;
         }
 
         private static void ReportGlowFailure(Exception exception)
